@@ -8,7 +8,7 @@ import javax.validation.Valid;
 import java.math.BigDecimal;
 
 @RestController
-@PreAuthorize("isAuthenticated()")
+//@PreAuthorize("isAuthenticated()")
 public class AccountController {
 
     private AccountDao accountDao;
@@ -19,13 +19,21 @@ public class AccountController {
     }
 
 
-    @RequestMapping(path = "/account/{id}", method = RequestMethod.GET)
-    public BigDecimal getBalanceById(@Valid @PathVariable int id){
+    @RequestMapping(path = "/account/", method = RequestMethod.GET)
+    public BigDecimal getBalanceById(@Valid @RequestParam int id){
 
         return accountDao.getBalanceById(id);
     }
 
-
+@RequestMapping(path = "/account/transfer", method = RequestMethod.PUT )
+    public boolean transfer(@Valid @RequestParam int fromId, @RequestParam int toId, @RequestParam BigDecimal transferAmount){
+        if(!accountDao.transfer(fromId, toId, transferAmount)){
+            return false;
+        }
+        return true;
+}
+//HASH ID'S
+// CREATETRANSACTION METHOD IN JDBC?
 
 
 

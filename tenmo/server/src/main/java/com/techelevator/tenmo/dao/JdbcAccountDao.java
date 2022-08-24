@@ -55,17 +55,16 @@ public class JdbcAccountDao implements AccountDao {
         } if(transferAmount.compareTo(getBalanceById(fromAccountId)) < 0 || transferAmount.compareTo(getBalanceById(fromAccountId)) == 0) {
                 return false;
             }
+          Integer newTransferId;
+          String sql = "BEGIN TRANSACTION; UPDATE account  SET balance = balance + ?  WHERE account_id = ?; UPDATE account SET balance = balance - ? WHERE account_id = ?;";
+          String sql2 = "INSERT INTO transfer (status, amount, to_account_id, from_account_id) VALUES ('pending', ?, ?, ?) RETURNING transfer_id;";
+                  try {
 
-
-
-
-
-            return true;
-        }
-
-
-
-
+                      SqlRowSet rowSet = jdbcTemplate.queryForRowSet(sql, transferAmount, toAccountId, transferAmount, fromAccountId);
+                        newTransferId = jdbcTemplate.queryForObject(sql2,Integer.class, transferAmount,toAccountId,fromAccountId);
+                  } catch (DataAccessException e) {
+                      return false;
+                  }
         return true;
     }
     private Account mapRowToAccount(SqlRowSet rowSet) {

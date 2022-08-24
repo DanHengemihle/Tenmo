@@ -21,6 +21,8 @@ public class JdbcUserDao implements UserDao {
         this.jdbcTemplate = jdbcTemplate;
     }
 
+
+
     @Override
     public int findIdByUsername(String username) {
         String sql = "SELECT user_id FROM tenmo_user WHERE username ILIKE ?;";
@@ -61,14 +63,15 @@ public class JdbcUserDao implements UserDao {
         String sql = "INSERT INTO tenmo_user (username, password_hash) VALUES (?, ?) RETURNING user_id";
         String password_hash = new BCryptPasswordEncoder().encode(password);
         Integer newUserId;
+        String sql2 = "INSERT INTO account (user_id, balance) VALUES (?, '1000.00') RETURNING account_id;";
+        Integer newAccountId;
         try {
             newUserId = jdbcTemplate.queryForObject(sql, Integer.class, username, password_hash);
+            newAccountId = jdbcTemplate.queryForObject(sql2, Integer.class, newUserId);
+
         } catch (DataAccessException e) {
             return false;
         }
-
-        // TODO: Create the account record with initial balance
-
         return true;
     }
 

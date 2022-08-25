@@ -28,7 +28,7 @@ cli
 
    List<Account> listAccountsForTransfer();
 
-   boolean transfer(int fromAccountId, int toAccountId, BigDecimal transferAmount);
+
 
 
 }

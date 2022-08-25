@@ -2,6 +2,7 @@ package com.techelevator.tenmo.controller;
 
 import com.techelevator.tenmo.dao.AccountDao;
 import com.techelevator.tenmo.model.Account;
+import com.techelevator.tenmo.model.AccountDTO;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -29,28 +30,12 @@ public class AccountController {
     }
 
     @RequestMapping(path = "/account/", method = RequestMethod.GET)
-    public BigDecimal getBalanceById(@Valid @RequestParam int id){
+    public BigDecimal getBalanceById(@Valid @RequestBody AccountDTO accountDTO){
 
-        return accountDao.getBalanceById(id);
+        return accountDao.getBalanceById(accountDTO.getAccountId());
     }
 
-@RequestMapping(path = "/account/transfer/approval", method = RequestMethod.PUT )
-    public String transfer(@Valid @RequestParam int fromId, @RequestParam int toId, @RequestParam BigDecimal transferAmount, @RequestParam String status){
 
-    //(DO WE NEED SEPARATE STRING STATUS PARAMETER)?
-
-    //IF STATEMENTS DEPENDING ON STATUS
-
-    //if(status.equalsIgnoreCase("Approved")){
-    //transfer.setStatus("Approved")
-    //transferDao.transfer()
-
-
-        if(!accountDao.transfer(fromId, toId, transferAmount)){
-            return "Transfer Denied";
-        }
-        return "Transfer Approved";
-}
 
 
 

@@ -45,28 +45,7 @@ public class JdbcAccountDao implements AccountDao {
     }
 
 
-    @Override
-    public boolean transfer(int fromAccountId, int toAccountId, BigDecimal transferAmount) {
 
-        //MOVE TO TRANSFER
-        //TRANSFER OBJECT IN PARAMETERS
-
-        if (fromAccountId == toAccountId) {
-                return false;
-        } if (transferAmount.compareTo(BigDecimal.ZERO) < 0 || transferAmount.compareTo(BigDecimal.ZERO) == 0) {
-                return false;
-        } if(transferAmount.compareTo(getBalanceById(fromAccountId)) < 0 || transferAmount.compareTo(getBalanceById(fromAccountId)) == 0) {
-                return false;
-            }
-          String sql = "BEGIN TRANSACTION; UPDATE account SET balance = balance + ?  WHERE account_id = ?; UPDATE account SET balance = balance - ? WHERE account_id = ?;";
-
-                  try {
-                      SqlRowSet rowSet = jdbcTemplate.queryForRowSet(sql, transferAmount, toAccountId, transferAmount, fromAccountId);
-                  } catch (DataAccessException e) {
-                      return false;
-                  }
-        return true;
-    }
     private Account mapRowToAccount(SqlRowSet rowSet) {
         Account account = new Account();
         account.setAccountId(rowSet.getInt("account_id"));

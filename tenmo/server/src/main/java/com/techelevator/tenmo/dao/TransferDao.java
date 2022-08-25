@@ -16,7 +16,7 @@ public interface TransferDao {
 
    BigDecimal getBalanceByAccountId(int id);
 
-  // boolean transferApproval(int transferId)
+   boolean transferApproval(Transfer transfer);
 
 
 

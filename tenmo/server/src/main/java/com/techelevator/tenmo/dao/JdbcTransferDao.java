@@ -56,16 +56,36 @@ public class JdbcTransferDao implements  TransferDao{
     @Override
     public Transfer createTransfer(int fromAccountId, int toAccountId, BigDecimal transferAmount) {
 
-        //THROWING EXCEPTION?
+        Transfer transfer = new Transfer();
+        transfer.setFromAccountId(fromAccountId);
+        transfer.setToAccountId(toAccountId);
+        transfer.setAmount(transferAmount);
+        String sql = "INSERT INTO transfer (status, amount, to_account_id, from_account_id) VALUES (?, ?, ?, ?) RETURNING transfer_id;";
+        Integer newId = jdbcTemplate.queryForObject(sql, Integer.class, transfer.getStatus(), transferAmount, toAccountId, fromAccountId);
 
-        Transfer transfer = null;
-        String sql = "INSERT INTO transfer (amount, to_account_id, from_account_id) VALUES (?, ?, ?) RETURNING transfer_id;";
-        SqlRowSet results = jdbcTemplate.queryForRowSet(sql, transferAmount, toAccountId, fromAccountId);
-
-       if(results.next()){
-           transfer = mapRowToTransfer(results);
-       }
+        transfer.setId(newId);
        return transfer;
+    }
+
+
+    @Override
+    public boolean transferApproval(Transfer transfer) {
+
+        if (transfer.getToAccountId() == transfer.getFromAccountId()) {
+            return false;
+        } if (transfer.getAmount().compareTo(BigDecimal.ZERO) < 0 || transfer.getAmount().compareTo(BigDecimal.ZERO) == 0) {
+            return false;
+        } if(transfer.getAmount().compareTo(getBalanceByAccountId(transfer.getFromAccountId())) < 0 || transfer.getAmount().compareTo(getBalanceByAccountId(transfer.getFromAccountId())) == 0) {
+            return false;
+        }
+        String sql = "BEGIN TRANSACTION; UPDATE account SET balance = balance + ?  WHERE account_id = ?; UPDATE account SET balance = balance - ? WHERE account_id = ?;";
+
+        try {
+            SqlRowSet rowSet = jdbcTemplate.queryForRowSet(sql, getBalanceByAccountId(transfer.getFromAccountId()), transfer.getToAccountId(), transfer.getAmount(), transfer.getFromAccountId());
+        } catch (DataAccessException e) {
+            return false;
+        }
+        return true;
     }
 
 

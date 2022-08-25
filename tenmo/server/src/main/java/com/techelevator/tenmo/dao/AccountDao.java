@@ -11,12 +11,13 @@ public interface AccountDao {
 /*
 
 
-fix method throwing error if it still is
-check transfer methods in postman
-fix and move transfer method from jdbcaccount and controller
 
 
-add transfer list method to see all transfers for account, and one for just pending transfers
+
+
+transfer denial still needs work
+and one for just pending transfers (list of transfers)
+test listalltransfers method in transfer controller
 cli
 
 

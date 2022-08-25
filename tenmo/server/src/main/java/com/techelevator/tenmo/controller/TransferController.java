@@ -3,15 +3,12 @@ package com.techelevator.tenmo.controller;
 import com.techelevator.tenmo.dao.TransferDao;
 import com.techelevator.tenmo.model.AccountDTO;
 import com.techelevator.tenmo.model.Transfer;
-import com.techelevator.tenmo.model.TransferIdDTO;
-import org.springframework.dao.DataAccessException;
+import com.techelevator.tenmo.model.TransferDTO;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
-import java.math.BigDecimal;
 import java.util.List;
 
 @RestController
@@ -28,7 +25,7 @@ public class TransferController {
     }
 
     @RequestMapping(path = "/account/transfer", method = RequestMethod.GET)
-    public Transfer getTransferById(@Valid @RequestBody TransferIdDTO transferId){
+    public Transfer getTransferById(@Valid @RequestBody TransferDTO transferId){
 
         String idHash = String.valueOf(String.valueOf(transferId).hashCode());
 
@@ -51,16 +48,24 @@ public class TransferController {
 
 
     @RequestMapping(path = "/account/transfer", method = RequestMethod.PUT )
-    public String transferApproval(@Valid @RequestBody Transfer transfer) {
+    public String transferApproval(@Valid @RequestBody TransferDTO transferId, @RequestParam String status) {
+        int id = transferId.getTransferId();
+        Transfer transfer =  transferDao.getTransferById(id);
 
-        if (transfer.getStatus().equalsIgnoreCase("Approved")) {
+
+        if (status.equalsIgnoreCase("Approve")) {
+
             transferDao.transferApproval(transfer);
-
+            return "Transfer Approved";
         }
-        if (!transferDao.transferApproval(transfer)) {
+
+        else if(status.equalsIgnoreCase("Deny")){
+           transfer.setStatus("Denied");
             return "Transfer Denied";
         }
-        return "Transfer Approved";
+        else {
+            return "Transfer Failed";
+        }
     }
 
 }

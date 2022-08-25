@@ -43,7 +43,7 @@ public class JdbcTransferDao implements  TransferDao{
 
     @Override
     public Transfer getTransferById(int transferId) {
-        Transfer transfer = null;
+        Transfer transfer = new Transfer();
         String sql = "SELECT * FROM transfer WHERE transfer_id = ?;";
         SqlRowSet results = jdbcTemplate.queryForRowSet(sql, transferId);
         if(results.next()) {
@@ -75,13 +75,14 @@ public class JdbcTransferDao implements  TransferDao{
             return false;
         } if (transfer.getAmount().compareTo(BigDecimal.ZERO) < 0 || transfer.getAmount().compareTo(BigDecimal.ZERO) == 0) {
             return false;
-        } if(transfer.getAmount().compareTo(getBalanceByAccountId(transfer.getFromAccountId())) < 0 || transfer.getAmount().compareTo(getBalanceByAccountId(transfer.getFromAccountId())) == 0) {
+        } if(transfer.getAmount().compareTo(getBalanceByAccountId(transfer.getFromAccountId())) == 1) {
             return false;
         }
-        String sql = "BEGIN TRANSACTION; UPDATE account SET balance = balance + ?  WHERE account_id = ?; UPDATE account SET balance = balance - ? WHERE account_id = ?;";
+        String sql = "BEGIN TRANSACTION; UPDATE account SET balance = balance + ?  WHERE account_id = ?; UPDATE account SET balance = balance - ? WHERE account_id = ?; UPDATE transfer SET status = 'Approved' WHERE transfer_id = ?; COMMIT;";
 
         try {
-            SqlRowSet rowSet = jdbcTemplate.queryForRowSet(sql, getBalanceByAccountId(transfer.getFromAccountId()), transfer.getToAccountId(), transfer.getAmount(), transfer.getFromAccountId());
+            SqlRowSet rowSet = jdbcTemplate.queryForRowSet(sql, transfer.getAmount(), transfer.getToAccountId(), transfer.getAmount(), transfer.getFromAccountId(), transfer.getId());
+
         } catch (DataAccessException e) {
             return false;
         }

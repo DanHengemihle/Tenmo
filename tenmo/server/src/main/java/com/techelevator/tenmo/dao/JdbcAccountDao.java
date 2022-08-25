@@ -32,36 +32,36 @@ public class JdbcAccountDao implements AccountDao {
             return account.getBalance();
         }
 
-//    @Override
-//    public List<User> listUsers() {
-//        List<User> users = new ArrayList<>();
-//        User user = null;
-//        SqlRowSet results = jdbcTemplate.queryForRowSet("SELECT username, user_id FROM tenmo_user;");
-//        while (results.next()){
-//            users.add(reults);
-//        }
-//
-//        return null;
-//    }
+    @Override
+    public List<Account> listAccountsForTransfer() {
+        List<Account> accounts = new ArrayList<>();
+
+        SqlRowSet results = jdbcTemplate.queryForRowSet("SELECT * FROM account;");
+        while (results.next()){
+            Account account = mapRowToAccount(results);
+            accounts.add(account);
+        }
+        return accounts;
+    }
 
 
     @Override
     public boolean transfer(int fromAccountId, int toAccountId, BigDecimal transferAmount) {
 
-          if (fromAccountId == toAccountId) {
+        //MOVE TO TRANSFER
+        //TRANSFER OBJECT IN PARAMETERS
+
+        if (fromAccountId == toAccountId) {
                 return false;
         } if (transferAmount.compareTo(BigDecimal.ZERO) < 0 || transferAmount.compareTo(BigDecimal.ZERO) == 0) {
                 return false;
         } if(transferAmount.compareTo(getBalanceById(fromAccountId)) < 0 || transferAmount.compareTo(getBalanceById(fromAccountId)) == 0) {
                 return false;
             }
-          Integer newTransferId;
-          String sql = "BEGIN TRANSACTION; UPDATE account  SET balance = balance + ?  WHERE account_id = ?; UPDATE account SET balance = balance - ? WHERE account_id = ?;";
-          String sql2 = "INSERT INTO transfer (status, amount, to_account_id, from_account_id) VALUES ('pending', ?, ?, ?) RETURNING transfer_id;";
-                  try {
+          String sql = "BEGIN TRANSACTION; UPDATE account SET balance = balance + ?  WHERE account_id = ?; UPDATE account SET balance = balance - ? WHERE account_id = ?;";
 
+                  try {
                       SqlRowSet rowSet = jdbcTemplate.queryForRowSet(sql, transferAmount, toAccountId, transferAmount, fromAccountId);
-                        newTransferId = jdbcTemplate.queryForObject(sql2,Integer.class, transferAmount,toAccountId,fromAccountId);
                   } catch (DataAccessException e) {
                       return false;
                   }

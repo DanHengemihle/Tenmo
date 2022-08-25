@@ -3,6 +3,7 @@ package com.techelevator.tenmo.dao;
 import com.techelevator.tenmo.model.Account;
 import com.techelevator.tenmo.model.Transfer;
 import com.techelevator.tenmo.model.User;
+import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Component;
@@ -16,6 +17,17 @@ public class JdbcTransferDao implements  TransferDao{
 
     private JdbcTemplate jdbcTemplate;
     public JdbcTransferDao(JdbcTemplate jdbcTemplate){this.jdbcTemplate = jdbcTemplate;}
+
+
+    @Override
+    public BigDecimal getBalanceByAccountId(int id) {
+
+        String sql = "SELECT balance FROM account WHERE account_id = ?;";
+
+        return jdbcTemplate.queryForObject(sql, BigDecimal.class, id);
+    }
+
+
 
     @Override
     public List<Transfer> listAllTransfersByAccountId(int accountId) {
@@ -41,7 +53,20 @@ public class JdbcTransferDao implements  TransferDao{
         return transfer;
     }
 
+    @Override
+    public Transfer createTransfer(int fromAccountId, int toAccountId, BigDecimal transferAmount) {
 
+        //THROWING EXCEPTION?
+
+        Transfer transfer = null;
+        String sql = "INSERT INTO transfer (amount, to_account_id, from_account_id) VALUES (?, ?, ?) RETURNING transfer_id;";
+        SqlRowSet results = jdbcTemplate.queryForRowSet(sql, transferAmount, toAccountId, fromAccountId);
+
+       if(results.next()){
+           transfer = mapRowToTransfer(results);
+       }
+       return transfer;
+    }
 
 
     private Transfer mapRowToTransfer(SqlRowSet rowSet) {

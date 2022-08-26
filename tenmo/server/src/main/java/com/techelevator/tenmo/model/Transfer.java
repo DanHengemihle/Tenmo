@@ -1,11 +1,16 @@
 package com.techelevator.tenmo.model;
 
+import javax.validation.constraints.DecimalMin;
+import javax.validation.constraints.Positive;
 import java.math.BigDecimal;
 
 public class Transfer {
     private int transferId;
     private String status = "Pending";
+
+  //  @DecimalMin(value = "00.01", message="Amount cannot be negative or zero")
     private BigDecimal amount;
+
     private int toAccountId;
     private int fromAccountId;
 

@@ -8,20 +8,6 @@ import java.util.List;
 import java.util.Map;
 
 public interface AccountDao {
-/*
-
-
-
-
-
-
-transfer denial still needs work
-and one for just pending transfers (list of transfers)
-test listalltransfers method in transfer controller
-cli
-
-
-  */
 
 
 

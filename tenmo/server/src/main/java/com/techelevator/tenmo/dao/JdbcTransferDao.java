@@ -9,14 +9,18 @@ import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
+import java.security.Principal;
 import java.util.ArrayList;
 import java.util.List;
 
 @Component
-public class JdbcTransferDao implements  TransferDao{
+public class JdbcTransferDao implements  TransferDao {
 
     private JdbcTemplate jdbcTemplate;
-    public JdbcTransferDao(JdbcTemplate jdbcTemplate){this.jdbcTemplate = jdbcTemplate;}
+
+    public JdbcTransferDao(JdbcTemplate jdbcTemplate) {
+        this.jdbcTemplate = jdbcTemplate;
+    }
 
 
     @Override
@@ -28,13 +32,24 @@ public class JdbcTransferDao implements  TransferDao{
     }
 
 
-
     @Override
     public List<Transfer> listAllTransfersByAccountId(int accountId) {
         List<Transfer> transfers = new ArrayList<>();
         String sql = "SELECT * FROM transfer WHERE from_account_id = ?;";
         SqlRowSet results = jdbcTemplate.queryForRowSet(sql, accountId);
-        while(results.next()) {
+        while (results.next()) {
+            Transfer transfer = mapRowToTransfer(results);
+            transfers.add(transfer);
+        }
+        return transfers;
+    }
+
+    @Override
+    public List<Transfer> listAllPendingTransfers(int accountId) {
+        List<Transfer> transfers = new ArrayList<>();
+        String sql = "SELECT * FROM transfer WHERE from_account_id = ? AND status = 'Pending';";
+        SqlRowSet results = jdbcTemplate.queryForRowSet(sql, accountId);
+        while (results.next()) {
             Transfer transfer = mapRowToTransfer(results);
             transfers.add(transfer);
         }
@@ -46,8 +61,8 @@ public class JdbcTransferDao implements  TransferDao{
         Transfer transfer = new Transfer();
         String sql = "SELECT * FROM transfer WHERE transfer_id = ?;";
         SqlRowSet results = jdbcTemplate.queryForRowSet(sql, transferId);
-        if(results.next()) {
-             transfer = mapRowToTransfer(results);
+        if (results.next()) {
+            transfer = mapRowToTransfer(results);
 
         }
         return transfer;
@@ -56,15 +71,17 @@ public class JdbcTransferDao implements  TransferDao{
     @Override
     public Transfer createTransfer(int fromAccountId, int toAccountId, BigDecimal transferAmount) {
 
+
         Transfer transfer = new Transfer();
         transfer.setFromAccountId(fromAccountId);
         transfer.setToAccountId(toAccountId);
         transfer.setAmount(transferAmount);
         String sql = "INSERT INTO transfer (status, amount, to_account_id, from_account_id) VALUES (?, ?, ?, ?) RETURNING transfer_id;";
         Integer newId = jdbcTemplate.queryForObject(sql, Integer.class, transfer.getStatus(), transferAmount, toAccountId, fromAccountId);
-
         transfer.setId(newId);
-       return transfer;
+
+
+        return transfer;
     }
 
 
@@ -73,9 +90,11 @@ public class JdbcTransferDao implements  TransferDao{
 
         if (transfer.getToAccountId() == transfer.getFromAccountId()) {
             return false;
-        } if (transfer.getAmount().compareTo(BigDecimal.ZERO) < 0 || transfer.getAmount().compareTo(BigDecimal.ZERO) == 0) {
+        }
+        if (transfer.getAmount().compareTo(BigDecimal.ZERO) < 0 || transfer.getAmount().compareTo(BigDecimal.ZERO) == 0) {
             return false;
-        } if(transfer.getAmount().compareTo(getBalanceByAccountId(transfer.getFromAccountId())) == 1) {
+        }
+        if (transfer.getAmount().compareTo(getBalanceByAccountId(transfer.getFromAccountId())) == 1) {
             return false;
         }
         String sql = "BEGIN TRANSACTION; UPDATE account SET balance = balance + ?  WHERE account_id = ?; UPDATE account SET balance = balance - ? WHERE account_id = ?; UPDATE transfer SET status = 'Approved' WHERE transfer_id = ?; COMMIT;";
@@ -88,6 +107,28 @@ public class JdbcTransferDao implements  TransferDao{
         }
         return true;
     }
+
+    @Override
+    public void transferDenial(Transfer transfer) {
+        String sql = "UPDATE transfer SET status = 'Denied' WHERE transfer_id = ?;";
+
+        try {
+            SqlRowSet rowSet = jdbcTemplate.queryForRowSet(sql, transfer.getId());
+        } catch (DataAccessException e){
+    }
+    }
+
+    @Override
+    public int getAccountIdFromPrincipal(String username) {
+
+
+        String sql = "SELECT account.account_id FROM account JOIN tenmo_user ON tenmo_user.user_id = account.user_id WHERE username LIKE ?;";
+
+       Integer accountId = jdbcTemplate.queryForObject(sql, Integer.class, username);
+
+        return accountId;
+    }
+
 
 
     private Transfer mapRowToTransfer(SqlRowSet rowSet) {

@@ -20,10 +20,12 @@ public class JdbcTransferDaoTests extends BaseDaoTests {
     private static final Account testAccount =  new Account(4001, 5001, new BigDecimal("1000.00"));
     private static final Account testAccount2 =  new Account(4002, 5002, new BigDecimal("750.00"));
 
+    private JdbcAccountDao accountDao;
+
     @Before
     public void setup(){
         sut = new JdbcTransferDao(new JdbcTemplate(dataSource));
-
+        accountDao = new JdbcAccountDao(new JdbcTemplate(dataSource));
     }
 
     @Test
@@ -43,7 +45,7 @@ public class JdbcTransferDaoTests extends BaseDaoTests {
 
     @Test
     public void listAllPendingTransfers_returns_only_pending_transfers(){
-        Assert.assertEquals(5, sut.listAllPendingTransfers(4001).size());
+        Assert.assertEquals(4, sut.listAllPendingTransfers(4001).size());
     }
 
     @Test
@@ -89,7 +91,20 @@ public class JdbcTransferDaoTests extends BaseDaoTests {
 
     @Test
     public void transferApproval_updates_balances(){
+        sut.transferApproval(sut.getTransferById(5008));
+        Assert.assertEquals(new BigDecimal("1025.00"),accountDao.getBalanceById(4001) );
+        Assert.assertEquals(new BigDecimal("725.00"), accountDao.getBalanceById(4002));
+    }
 
+    @Test
+    public void transferDenial_changes_status_to_denied(){
+        sut.transferDenial(sut.getTransferById(5005));
+        Assert.assertEquals("Denied",sut.getTransferById(5005).getStatus() );
+    }
+    @Test
+    public void getAccountIdFromPrincipal_returns_username(){
+        int bobId = sut.getAccountIdFromPrincipal("bob");
+        Assert.assertEquals(4001, bobId);
     }
 
     }

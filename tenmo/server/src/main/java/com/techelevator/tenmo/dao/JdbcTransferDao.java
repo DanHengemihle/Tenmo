@@ -4,9 +4,11 @@ import com.techelevator.tenmo.model.Account;
 import com.techelevator.tenmo.model.Transfer;
 import com.techelevator.tenmo.model.User;
 import org.springframework.dao.DataAccessException;
+import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Component;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.security.Principal;
@@ -35,8 +37,8 @@ public class JdbcTransferDao implements  TransferDao {
     @Override
     public List<Transfer> listAllTransfersByAccountId(int accountId) {
         List<Transfer> transfers = new ArrayList<>();
-        String sql = "SELECT * FROM transfer WHERE from_account_id = ?;";
-        SqlRowSet results = jdbcTemplate.queryForRowSet(sql, accountId);
+        String sql = "SELECT * FROM transfer WHERE from_account_id = ? OR to_account_id = ?;";
+        SqlRowSet results = jdbcTemplate.queryForRowSet(sql, accountId, accountId);
         while (results.next()) {
             Transfer transfer = mapRowToTransfer(results);
             transfers.add(transfer);
@@ -47,8 +49,8 @@ public class JdbcTransferDao implements  TransferDao {
     @Override
     public List<Transfer> listAllPendingTransfers(int accountId) {
         List<Transfer> transfers = new ArrayList<>();
-        String sql = "SELECT * FROM transfer WHERE from_account_id = ? AND status = 'Pending';";
-        SqlRowSet results = jdbcTemplate.queryForRowSet(sql, accountId);
+        String sql = "SELECT * FROM transfer WHERE from_account_id = ? AND status = 'Pending' OR to_account_id = ? AND status = 'Pending';";
+        SqlRowSet results = jdbcTemplate.queryForRowSet(sql, accountId, accountId);
         while (results.next()) {
             Transfer transfer = mapRowToTransfer(results);
             transfers.add(transfer);
@@ -71,11 +73,11 @@ public class JdbcTransferDao implements  TransferDao {
     @Override
     public Transfer createTransfer(int fromAccountId, int toAccountId, BigDecimal transferAmount) {
 
-
         Transfer transfer = new Transfer();
         transfer.setFromAccountId(fromAccountId);
         transfer.setToAccountId(toAccountId);
         transfer.setAmount(transferAmount);
+
         String sql = "INSERT INTO transfer (status, amount, to_account_id, from_account_id) VALUES (?, ?, ?, ?) RETURNING transfer_id;";
         Integer newId = jdbcTemplate.queryForObject(sql, Integer.class, transfer.getStatus(), transferAmount, toAccountId, fromAccountId);
         transfer.setId(newId);

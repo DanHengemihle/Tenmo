@@ -23,7 +23,9 @@ public class TransferController {
     public TransferController(TransferDao transferDao){this.transferDao = transferDao;}
 
     @RequestMapping(path = "/account/transfers", method = RequestMethod.GET)
-    public List<Transfer>  listAllTransfersByAccountId(@Valid @RequestBody AccountDTO accountId){
+    public List<Transfer>  listAllTransfersByAccountId(@Valid @RequestBody AccountDTO accountId, Principal principal) {
+        if (transferDao.getAccountIdFromPrincipal(principal.getName()) == accountId.getAccountId()) {
+        }
         return transferDao.listAllTransfersByAccountId(accountId.getAccountId());
     }
 
@@ -46,11 +48,11 @@ public class TransferController {
 
 
         if (transfer.getToAccountId() == transfer.getFromAccountId()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unable to create transfer.");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unable to create transfer - cannot request transfer from yourself");
         } if (transfer.getAmount().compareTo(BigDecimal.ZERO) < 0 || transfer.getAmount().compareTo(BigDecimal.ZERO) == 0) {
-            return "Unable to create transfer.";
+            return "Unable to create transfer - amount cannot be negative or zero.";
         } if(transfer.getAmount().compareTo(transferDao.getBalanceByAccountId(transfer.getFromAccountId())) == 1) {
-            return "Unable to create transfer.";
+            return "Unable to create transfer - requested amount cannot be higher than balance";
         }
         try {
             transferDao.createTransfer(transfer.getFromAccountId(), transfer.getToAccountId(), transfer.getAmount());

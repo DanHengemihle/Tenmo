@@ -7,6 +7,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Component;
 
+import javax.sql.DataSource;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -21,15 +22,21 @@ public class JdbcAccountDao implements AccountDao {
 
 
 
+
     @Override
     public BigDecimal getBalanceById(int id) {
-        Account account = null;
-        String sql = "SELECT account_id, user_id, balance FROM account WHERE account_id = ?;";
-        SqlRowSet rowSet = jdbcTemplate.queryForRowSet(sql, id);
-        if (rowSet.next()) {
-            account = mapRowToAccount(rowSet);
-        }
-            return account.getBalance();
+
+        String sql = "SELECT balance FROM account WHERE account_id = ?;";
+        Account account = new Account();
+        BigDecimal balance = new BigDecimal(0);
+       try {
+           balance = jdbcTemplate.queryForObject(sql, BigDecimal.class, id);
+       } catch (DataAccessException e) {
+           e.printStackTrace();
+       }
+
+        return balance;
+
         }
 
     @Override
